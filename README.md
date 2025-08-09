@@ -1,4 +1,4 @@
-I DECIDE
+project name-I DECIDE
 
 Basic Details
 Team Name: INFLATED PAPPADAM
@@ -65,3 +65,4 @@ Run
 # OR run from terminal
 open decide.html   # Mac
 start decide.html  # Windows
+
