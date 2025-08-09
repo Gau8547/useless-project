@@ -1,20 +1,208 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lie Detector - Voice Edition</title>
-  <link rel="stylesheet" href="style.css">
+  <title>I DECIDE</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(-45deg, #000000, #1a1a1a, #222222, #000000);
+      background-size: 400% 400%;
+      animation: gradient 10s ease infinite;
+      color: white;
+      text-align: center;
+      padding-top: 40px;
+    }
+
+    @keyframes gradient {
+      0% {background-position: 0% 50%;}
+      50% {background-position: 100% 50%;}
+      100% {background-position: 0% 50%;}
+    }
+
+    h1 {
+      font-size: 3em;
+      color: #00ffcc;
+      text-shadow: 0 0 20px #00ffcc, 0 0 30px #0ff;
+    }
+
+    #light {
+      width: 150px;
+      height: 150px;
+      margin: 20px auto;
+      border-radius: 50%;
+      background-color: grey;
+      box-shadow: 0 0 30px 10px grey;
+      transition: 0.3s ease-in-out;
+    }
+
+    #faceIcon {
+      font-size: 60px;
+      margin-top: 10px;
+      transition: transform 0.3s;
+    }
+
+    #truthMeter {
+      width: 300px;
+      height: 25px;
+      background-color: #333;
+      border-radius: 20px;
+      margin: 10px auto;
+      overflow: hidden;
+      box-shadow: 0 0 10px #111;
+    }
+
+    #meterFill {
+      height: 100%;
+      width: 0%;
+      background-color: green;
+      border-radius: 20px;
+      transition: width 0.6s ease, background-color 0.3s;
+      animation: pulse 1s infinite alternate ease-in-out;
+    }
+
+    @keyframes pulse {
+      0% { transform: scaleX(1); }
+      100% { transform: scaleX(1.03); }
+    }
+
+    #spokenText {
+      margin-top: 15px;
+      font-size: 20px;
+      color: lightgreen;
+    }
+
+    #history {
+      margin-top: 20px;
+      max-height: 200px;
+      overflow-y: auto;
+      border-top: 1px solid #666;
+      padding-top: 10px;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 12px 30px;
+      font-size: 18px;
+      border: none;
+      background-color: #00ffaa;
+      color: black;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 20px;
+      box-shadow: 0 0 10px #00ffaa;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background-color: #00cc88;
+      box-shadow: 0 0 20px #00ffaa;
+      transform: scale(1.05);
+    }
+  </style>
 </head>
 <body>
-  <h1>Lie Detector</h1>
+
+  <h1>I DECIDE</h1>
+  <p>Speak your truth... or face it! </p>
+  <button id="speakBtn">🎙 Speak Now</button>
 
   <div id="light"></div>
+  <div id="faceIcon">😐</div>
 
-  <button id="speakBtn">🎤 Speak Now</button>
+  <div id="truthMeter">
+    <div id="meterFill"></div>
+  </div>
 
-  <div id="message">Waiting for input...</div>
+  <div id="spokenText">[ Waiting for voice input... ]</div>
 
-  <script src="script.js"></script>
+  <div id="history"><strong>History Log:</strong></div>
+
+  <audio id="truthSound" src="https://www.soundjay.com/button/sounds/button-10.mp3"></audio>
+  <audio id="lieSound" src="https://www.soundjay.com/button/sounds/button-3.mp3"></audio>
+
+  <script>
+    const light = document.getElementById('light');
+    const meterFill = document.getElementById('meterFill');
+    const spokenText = document.getElementById('spokenText');
+    const speakBtn = document.getElementById('speakBtn');
+    const historyDiv = document.getElementById('history');
+    const truthSound = document.getElementById('truthSound');
+    const lieSound = document.getElementById('lieSound');
+    const faceIcon = document.getElementById('faceIcon');
+
+    speakBtn.addEventListener('click', () => {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("Speech Recognition is not supported in this browser.");
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      spokenText.textContent = "🎧 Listening... ";
+      recognition.start();
+
+      recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        spokenText.textContent = "You said: " + transcript;
+        checkLie(transcript.toLowerCase());
+      };
+
+      recognition.onerror = function(event) {
+        spokenText.textContent = "Error: " + event.error;
+      };
+    });
+
+    function checkLie(input) {
+      let isLie;
+
+      if (input.includes("never lie") || input.includes("always honest") || input.includes("i swear")) {
+        isLie = true;
+      } else if (input.includes("forgot homework") || input.includes("didn't sleep")) {
+        isLie = false;
+      } else {
+        isLie = Math.random() < 0.5;
+      }
+
+      if (isLie) {
+        blinkLight("red");
+        updateMeter("red", 90);
+        faceIcon.textContent = "😈";
+        lieSound.play();
+        addToHistory(input, " Lie Detected! I caught you...");
+      } else {
+        blinkLight("limegreen");
+        updateMeter("limegreen", 100);
+        faceIcon.textContent = "😊";
+        truthSound.play();
+        addToHistory(input, " Truth Confirmed! Brave...");
+      }
+    }
+
+    function blinkLight(color) {
+      let count = 0;
+      const interval = setInterval(() => {
+        light.style.backgroundColor = (count % 2 === 0) ? color : 'grey';
+        light.style.boxShadow = (count % 2 === 0) ? `0 0 40px 20px ${color}` : '0 0 30px 10px grey';
+        count++;
+        if (count > 5) clearInterval(interval);
+      }, 300);
+    }
+
+    function updateMeter(color, width) {
+      meterFill.style.backgroundColor = color;
+      meterFill.style.width = width + "%";
+    }
+
+    function addToHistory(text, result) {
+      const entry = document.createElement('div');
+      entry.innerHTML = `<em>${text}</em> → <strong>${result}</strong>`;
+      historyDiv.appendChild(entry);
+      historyDiv.scrollTop = historyDiv.scrollHeight;
+    }
+  </script>
 </body>
 </html>
